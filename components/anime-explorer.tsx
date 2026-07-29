@@ -4,7 +4,8 @@
 
 import { FormEvent, useState } from "react";
 import { motion } from "motion/react";
-import { Search, Star } from "lucide-react";
+import { Heart, Search, Star } from "lucide-react";
+import { useTrainer } from "@/lib/trainer-progress";
 
 type Anime = {
   mal_id: number;
@@ -23,6 +24,7 @@ export function AnimeExplorer() {
   const [query, setQuery] = useState("Pokemon");
   const [results, setResults] = useState<Anime[]>([]);
   const [status, setStatus] = useState("");
+  const { toggleDiscovery, isDiscoverySaved } = useTrainer();
 
   async function search(event: FormEvent) {
     event.preventDefault();
@@ -87,6 +89,28 @@ export function AnimeExplorer() {
                 <h3>{anime.title_english || anime.title}</h3>
                 <p>{anime.synopsis?.slice(0, 150) || "Kein Text verfügbar."}</p>
               </div>
+              <button
+                className={
+                  isDiscoverySaved(`anime-${anime.mal_id}`) ? "saved" : ""
+                }
+                onClick={() =>
+                  toggleDiscovery({
+                    id: `anime-${anime.mal_id}`,
+                    name: anime.title_english || anime.title,
+                    image: anime.images.webp.image_url,
+                    kind: "anime",
+                  })
+                }
+                aria-label={`${anime.title_english || anime.title} speichern`}
+              >
+                <Heart
+                  fill={
+                    isDiscoverySaved(`anime-${anime.mal_id}`)
+                      ? "currentColor"
+                      : "none"
+                  }
+                />
+              </button>
             </motion.article>
           ))}
         </div>

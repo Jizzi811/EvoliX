@@ -8,21 +8,35 @@ import {
   ChevronDown,
   Compass,
   Gamepad2,
+  Images,
   Menu,
   MessageCircle,
   ShieldCheck,
   Sparkles,
   Star,
+  Trophy,
+  UserRound,
   X,
   Zap,
 } from "lucide-react";
 import { AnimeExplorer } from "@/components/anime-explorer";
 import { HoloCard } from "@/components/holo-card";
 import { PokemonExplorer } from "@/components/pokemon-explorer";
+import { PokemonQuiz } from "@/components/pokemon-quiz";
+import { TcgGallery } from "@/components/tcg-gallery";
+import { TrainerDashboard } from "@/components/trainer-dashboard";
 import { VoiceChat } from "@/components/voice-chat";
 import type { EvoliXMode } from "@/lib/evolix-prompt";
+import { TrainerProvider, useTrainer } from "@/lib/trainer-progress";
 
-type Section = "hub" | "pokemon" | "anime" | "quest";
+type Section =
+  | "hub"
+  | "pokemon"
+  | "anime"
+  | "quest"
+  | "quiz"
+  | "tcg"
+  | "trainer";
 
 const modeCopy: Record<
   EvoliXMode,
@@ -50,10 +64,11 @@ const modeCopy: Record<
   },
 };
 
-export default function Home() {
+function EvoliXApp() {
   const [section, setSection] = useState<Section>("hub");
   const [mode, setMode] = useState<EvoliXMode>("companion");
   const [mobileNav, setMobileNav] = useState(false);
+  const { level, levelXp, nextLevelXp } = useTrainer();
 
   function navigate(target: Section, nextMode?: EvoliXMode) {
     setSection(target);
@@ -115,12 +130,28 @@ export default function Home() {
           >
             Quests
           </button>
+          <button
+            className={section === "quiz" ? "active" : ""}
+            onClick={() => navigate("quiz", "pokemon")}
+          >
+            Quiz
+          </button>
+          <button
+            className={section === "trainer" ? "active" : ""}
+            onClick={() => navigate("trainer")}
+          >
+            Trainer
+          </button>
         </nav>
 
         <div className="header-actions">
-          <span className="level-pill">
-            <Zap /> LV. 01
-          </span>
+          <button
+            className="level-pill"
+            onClick={() => navigate("trainer")}
+            title={`${levelXp}/${nextLevelXp} XP`}
+          >
+            <Zap /> LV. {String(level).padStart(2, "0")}
+          </button>
           <button
             className="menu-button"
             onClick={() => setMobileNav((open) => !open)}
@@ -201,7 +232,7 @@ export default function Home() {
               <div className="section-heading">
                 <div>
                   <span className="section-kicker">WÄHLE DEIN PORTAL</span>
-                  <h2>Vier Wege. Ein EvoliX.</h2>
+                  <h2>Sieben Portale. Ein EvoliX.</h2>
                 </div>
                 <p>
                   Jede Welt verändert EvoliX&apos; Fokus – seine Persönlichkeit
@@ -241,6 +272,30 @@ export default function Home() {
                   icon={<MessageCircle />}
                   accent="violet"
                   onClick={() => setMode("companion")}
+                />
+                <HoloCard
+                  eyebrow="SAMMELN"
+                  title="Holo-Archiv"
+                  text="Pokémon-Karten aus verschiedenen Epochen entdecken und merken."
+                  icon={<Images />}
+                  accent="cyan"
+                  onClick={() => navigate("tcg", "pokemon")}
+                />
+                <HoloCard
+                  eyebrow="XP VERDIENEN"
+                  title="Kristall-Quiz"
+                  text="Pokémon-Wissen testen, XP sammeln und Erfolge freischalten."
+                  icon={<Trophy />}
+                  accent="amber"
+                  onClick={() => navigate("quiz", "pokemon")}
+                />
+                <HoloCard
+                  eyebrow="DEIN FORTSCHRITT"
+                  title="Trainer-Chronik"
+                  text="Team, Level, Erfolge und gespeicherte Entdeckungen ansehen."
+                  icon={<UserRound />}
+                  accent="violet"
+                  onClick={() => navigate("trainer")}
                 />
               </div>
 
@@ -339,6 +394,39 @@ export default function Home() {
               </div>
             </motion.div>
           )}
+
+          {section === "quiz" && (
+            <motion.div
+              key="quiz"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+            >
+              <PokemonQuiz />
+            </motion.div>
+          )}
+
+          {section === "tcg" && (
+            <motion.div
+              key="tcg"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+            >
+              <TcgGallery />
+            </motion.div>
+          )}
+
+          {section === "trainer" && (
+            <motion.div
+              key="trainer"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+            >
+              <TrainerDashboard />
+            </motion.div>
+          )}
         </AnimatePresence>
       </section>
 
@@ -359,5 +447,13 @@ export default function Home() {
         <span>Entwickelt für Neugier, Kreativität & sichere Abenteuer.</span>
       </footer>
     </main>
+  );
+}
+
+export default function Home() {
+  return (
+    <TrainerProvider>
+      <EvoliXApp />
+    </TrainerProvider>
   );
 }
