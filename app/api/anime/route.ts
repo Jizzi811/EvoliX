@@ -179,6 +179,8 @@ type KitsuResource = {
   type: string;
   attributes: {
     canonicalTitle?: string;
+    title?: string;
+    slug?: string;
     titles?: { en?: string; en_jp?: string; ja_jp?: string };
     synopsis?: string;
     averageRating?: string;
@@ -224,7 +226,10 @@ async function fetchKitsu(query?: string, genre?: string) {
       .filter((entry) => entry.type === "categories")
       .map((entry) => [
         entry.id,
-        entry.attributes.canonicalTitle ?? "Anime",
+        entry.attributes.canonicalTitle ??
+          entry.attributes.title ??
+          entry.attributes.slug ??
+          "Anime",
       ]),
   );
 
@@ -256,7 +261,7 @@ async function fetchKitsu(query?: string, genre?: string) {
         },
       },
       score: attributes.averageRating
-        ? Number(attributes.averageRating) / 10
+        ? Math.round(Number(attributes.averageRating)) / 10
         : null,
       year: attributes.startDate
         ? Number(attributes.startDate.slice(0, 4))
