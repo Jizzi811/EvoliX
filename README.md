@@ -1,1 +1,50 @@
 # EvoliX
+
+EvoliX ist ein wandelbarer, jugendgerechter Fantasy-Voice-Companion für
+Pokémon-Wissen, Anime-Entdeckungen, Alltag und eigene Quests.
+
+## Funktionen
+
+- intelligenter Text- und Voice-Chat mit vier spezialisierten Modi
+- browserbasierte Spracherkennung und Sprachausgabe
+- animierter Fantasy-Orb mit Statusreaktionen
+- interaktiver Kristall-Dex über die öffentliche PokéAPI
+- jugendfreie Anime-Suche über Jikan (`sfw=true`)
+- neu entwickelte holografische Motion-Karten
+- responsive Oberfläche für Desktop und Mobilgeräte
+- serverseitiger OpenAI-Zugang; kein API-Schlüssel im Browser
+- ElevenLabs-Ausgabe mit der EvoliX-Stimme `ofikEh6BdgDIAr2BFBNV`
+- automatische Browserstimme als Fallback
+- altersgerechte Systemregeln und Datenschutzgrenzen
+
+## Lokal starten
+
+```bash
+npm install
+npm run dev
+```
+
+Für den KI-Chat wird serverseitig `OPENAI_API_KEY` erwartet. Optional kann
+`OPENAI_MODEL` gesetzt werden; standardmäßig verwendet EvoliX `gpt-5-mini`.
+
+Für die gewählte Stimme wird `ELEVENLABS_API_KEY` benötigt. Die öffentliche
+Voice-ID ist bereits als `ELEVENLABS_VOICE_ID=ofikEh6BdgDIAr2BFBNV`
+vorkonfiguriert.
+
+## Bildplatzhalter
+
+Der Orb ist aktuell als eigenständige animierte CSS/Motion-Komponente umgesetzt,
+weil in den bereitgestellten ZIP-Dateien kein Orb-Bild enthalten war. Ein
+gelieferter Orb kann später in `EvoliXOrb` eingesetzt werden, ohne Voice- oder
+Layoutlogik zu ändern.
+
+## Quellen und Lizenzgrenzen
+
+EvoliX verwendet keine kopierten Quelltexte oder Assets aus PokéRogue,
+Pokémon Auto Chess, RocketMap oder pokemon-cards-css. Deren Konzepte wurden
+lediglich auf technische Eignung geprüft. Pokémon-Daten und externe Bilder
+werden zur Laufzeit von PokéAPI geladen; Anime-Daten von Jikan.
+
+Pokémon und zugehörige Namen sind Marken ihrer jeweiligen Rechteinhaber. Dieses
+Projekt ist ein inoffizielles Fanprojekt und wird von Nintendo, The Pokémon
+Company oder Game Freak weder unterstützt noch betrieben.
