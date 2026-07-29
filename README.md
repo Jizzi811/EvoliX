@@ -14,7 +14,9 @@ Pokémon-Wissen, Anime-Entdeckungen, Alltag und eigene Quests.
 - Pokémon-Quiz mit XP, Leveln, Rekorden und Erfolgen
 - holografische Sammelkarten-Suche über die mehrsprachige TCGdex API
 - lokale Trainer-Chronik für Team und gespeicherte Entdeckungen
-- jugendfreie Anime-Suche über Jikan (`sfw=true`)
+- jugendgefiltertes Anime-Archiv über eine gecachte EvoliX-Serverroute zu
+  Jikan (`sfw=true`) mit Entdeckungsportalen, Detailansicht, Trailern,
+  Empfehlungen und kuratierter Ausfallsicherung
 - neu entwickelte holografische Motion-Karten
 - responsive Oberfläche für Desktop und Mobilgeräte
 - serverseitiger OpenAI-Zugang; kein API-Schlüssel im Browser
