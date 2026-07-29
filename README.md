@@ -31,12 +31,12 @@ Für die gewählte Stimme wird `ELEVENLABS_API_KEY` benötigt. Die öffentliche
 Voice-ID ist bereits als `ELEVENLABS_VOICE_ID=ofikEh6BdgDIAr2BFBNV`
 vorkonfiguriert.
 
-## Bildplatzhalter
+## EvoliX-Orb
 
-Der Orb ist aktuell als eigenständige animierte CSS/Motion-Komponente umgesetzt,
-weil in den bereitgestellten ZIP-Dateien kein Orb-Bild enthalten war. Ein
-gelieferter Orb kann später in `EvoliXOrb` eingesetzt werden, ohne Voice- oder
-Layoutlogik zu ändern.
+Der zentrale Orb wurde als eigenständiges EvoliX-Evolutionsrelikt aus einer
+hochgeladenen Stilreferenz entwickelt. Motion- und CSS-Layer reagieren auf die
+Zustände Zuhören, Denken und Sprechen; der Energiekern pulsiert synchron zur
+Agentenaktivität.
 
 ## Quellen und Lizenzgrenzen
 

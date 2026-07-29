@@ -491,123 +491,134 @@ input:focus-visible {
 }
 
 .evolix-orb {
-  width: 56%;
+  width: 64%;
   aspect-ratio: 1;
   border-radius: 50%;
   position: relative;
   overflow: hidden;
   isolation: isolate;
-  background:
-    radial-gradient(circle at 36% 30%, rgba(255, 255, 255, 0.98), transparent 9%),
-    radial-gradient(circle at 34% 31%, #b8f7ff, transparent 30%),
-    radial-gradient(circle at 70% 70%, #4c1d95, transparent 38%),
-    conic-gradient(from 210deg, #11184d, #7c3aed, #0891b2, #c026d3, #11184d);
-  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: #080610;
+  border: 1px solid rgba(196, 181, 253, 0.28);
   box-shadow:
-    inset -35px -38px 70px rgba(8, 5, 28, 0.62),
-    inset 18px 20px 35px rgba(255, 255, 255, 0.12),
-    0 0 30px rgba(103, 232, 249, 0.24),
-    0 0 90px rgba(124, 58, 237, 0.5);
+    inset 0 0 45px rgba(8, 5, 28, 0.72),
+    0 0 30px rgba(103, 232, 249, 0.18),
+    0 0 100px rgba(124, 58, 237, 0.48);
   transition: box-shadow 0.25s ease;
 }
 
 .orb-stage.listening .evolix-orb {
   box-shadow:
-    inset -35px -38px 70px rgba(8, 5, 28, 0.62),
+    inset 0 0 45px rgba(8, 5, 28, 0.62),
     0 0 35px rgba(103, 232, 249, 0.55),
     0 0 110px rgba(6, 182, 212, 0.54);
 }
 
 .orb-stage.thinking .evolix-orb {
   box-shadow:
-    inset -35px -38px 70px rgba(8, 5, 28, 0.62),
+    inset 0 0 45px rgba(8, 5, 28, 0.62),
     0 0 40px rgba(196, 181, 253, 0.54),
     0 0 120px rgba(124, 58, 237, 0.65);
 }
 
 .orb-stage.speaking .evolix-orb {
   box-shadow:
-    inset -35px -38px 70px rgba(8, 5, 28, 0.52),
+    inset 0 0 40px rgba(8, 5, 28, 0.45),
     0 0 46px rgba(240, 171, 252, 0.62),
     0 0 130px rgba(192, 38, 211, 0.6);
 }
 
-.orb-aurora {
+.orb-image {
+  object-fit: cover;
+  scale: 1.035;
+  filter: saturate(1.08) contrast(1.04);
+  transition:
+    filter 0.3s ease,
+    scale 0.3s ease;
+}
+
+.orb-stage.listening .orb-image {
+  filter: saturate(1.2) contrast(1.06) hue-rotate(8deg);
+}
+
+.orb-stage.thinking .orb-image {
+  filter: saturate(1.28) contrast(1.08) brightness(1.06);
+}
+
+.orb-stage.speaking .orb-image {
+  filter: saturate(1.38) contrast(1.08) brightness(1.12);
+  animation: orb-image-speak 0.82s ease-in-out infinite;
+}
+
+.orb-image-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background:
+    radial-gradient(circle at 51% 51%, transparent 0 29%, rgba(8, 5, 20, 0.06) 52%, rgba(4, 3, 12, 0.72) 100%),
+    linear-gradient(180deg, rgba(8, 6, 18, 0.1), rgba(8, 6, 18, 0.28));
+  pointer-events: none;
+}
+
+.orb-energy-scan {
   position: absolute;
   inset: -30%;
-  background:
-    conic-gradient(
-      from 0deg,
-      transparent 0 14%,
-      rgba(103, 232, 249, 0.7) 21%,
-      transparent 31% 54%,
-      rgba(240, 171, 252, 0.65) 64%,
-      transparent 74%
-    );
-  filter: blur(14px);
-  mix-blend-mode: screen;
-  animation: aurora-spin 9s linear infinite;
-}
-
-.orb-cloud {
-  position: absolute;
-  width: 90%;
-  height: 36%;
+  z-index: 3;
   border-radius: 50%;
+  opacity: 0.28;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0 18%,
+    rgba(103, 232, 249, 0.5) 23%,
+    transparent 30% 57%,
+    rgba(240, 171, 252, 0.6) 63%,
+    transparent 70%
+  );
+  mix-blend-mode: screen;
   filter: blur(12px);
-  opacity: 0.52;
-  mix-blend-mode: screen;
+  animation: aurora-spin 8s linear infinite;
 }
 
-.cloud-a {
-  left: -20%;
-  top: 34%;
-  background: linear-gradient(90deg, transparent, #67e8f9, #a78bfa, transparent);
-  rotate: -18deg;
-  animation: cloud-sweep 6s ease-in-out infinite alternate;
-}
-
-.cloud-b {
-  right: -30%;
-  bottom: 12%;
-  background: linear-gradient(90deg, transparent, #e879f9, #818cf8, transparent);
-  rotate: 18deg;
-  animation: cloud-sweep 7s ease-in-out infinite alternate-reverse;
-}
-
-.orb-core {
+.orb-voice-rings {
   position: absolute;
-  inset: 31%;
+  left: 50.5%;
+  top: 51%;
+  z-index: 4;
+  width: 22%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
   border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background:
-    radial-gradient(circle, #fff 0 5%, #c4b5fd 18%, #7c3aed 46%, transparent 68%);
-  filter: drop-shadow(0 0 16px #c4b5fd);
-  animation: core-breathe 2.4s ease-in-out infinite;
+  pointer-events: none;
 }
 
-.orb-core span {
-  width: 42%;
-  height: 42%;
-  rotate: 45deg;
-  border: 1px solid rgba(255, 255, 255, 0.88);
-  border-radius: 30% 2px 30% 2px;
+.orb-voice-rings i {
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(233, 213, 255, 0.7);
+  border-radius: 50%;
+  opacity: 0;
   box-shadow:
-    inset 0 0 12px #fff,
-    0 0 18px #fff;
+    inset 0 0 12px rgba(255, 255, 255, 0.35),
+    0 0 14px rgba(192, 38, 211, 0.55);
 }
 
-.orb-shine {
-  position: absolute;
-  width: 35%;
-  height: 16%;
-  left: 17%;
-  top: 11%;
-  rotate: -22deg;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.36);
-  filter: blur(7px);
+.orb-stage.listening .orb-voice-rings i {
+  animation: voice-ring 1.7s ease-out infinite;
+}
+
+.orb-stage.thinking .orb-voice-rings i {
+  animation: voice-ring 1.2s ease-out infinite;
+}
+
+.orb-stage.speaking .orb-voice-rings i {
+  animation: voice-ring 0.9s ease-out infinite;
+}
+
+.orb-voice-rings i:nth-child(2) {
+  animation-delay: -0.3s !important;
+}
+
+.orb-voice-rings i:nth-child(3) {
+  animation-delay: -0.6s !important;
 }
 
 .orb-runes {
@@ -1401,17 +1412,22 @@ footer > span {
   }
 }
 
-@keyframes cloud-sweep {
-  to {
-    translate: 30% -5%;
-    scale: 1.12;
+@keyframes orb-image-speak {
+  50% {
+    filter: saturate(1.48) contrast(1.1) brightness(1.18);
+    scale: 1.055;
   }
 }
 
-@keyframes core-breathe {
-  50% {
-    scale: 1.18;
-    filter: drop-shadow(0 0 23px #e9d5ff);
+@keyframes voice-ring {
+  0% {
+    opacity: 0.9;
+    scale: 0.82;
+  }
+
+  100% {
+    opacity: 0;
+    scale: 2.25;
   }
 }
 
@@ -1605,7 +1621,7 @@ footer > span {
   }
 
   .evolix-orb {
-    width: 60%;
+    width: 70%;
   }
 
   .message-stream {

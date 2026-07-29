@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { motion } from "motion/react";
 
 type OrbState = "idle" | "listening" | "thinking" | "speaking";
@@ -42,13 +43,21 @@ export function EvoliXOrb({ state }: { state: OrbState }) {
           ease: "easeInOut",
         }}
       >
-        <div className="orb-aurora" />
-        <div className="orb-cloud cloud-a" />
-        <div className="orb-cloud cloud-b" />
-        <div className="orb-core">
-          <span />
+        <Image
+          className="orb-image"
+          src="/evolix-orb.webp"
+          alt="EvoliX – ein magisches Evolutionsrelikt aus dunklem Metall mit violettem Energiekern"
+          fill
+          priority
+          sizes="(max-width: 640px) 70vw, 390px"
+        />
+        <div className="orb-image-vignette" />
+        <div className="orb-energy-scan" />
+        <div className="orb-voice-rings">
+          <i />
+          <i />
+          <i />
         </div>
-        <div className="orb-shine" />
       </motion.div>
       <div className="orb-runes">
         <span>ᚨ</span>
