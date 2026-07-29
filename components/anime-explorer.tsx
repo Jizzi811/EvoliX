@@ -47,7 +47,7 @@ type Anime = {
 
 type AnimeResponse = {
   data: Anime[];
-  source: "jikan" | "fallback";
+  source: "jikan" | "kitsu" | "fallback";
   notice?: string;
 };
 

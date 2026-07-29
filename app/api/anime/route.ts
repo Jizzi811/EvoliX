@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const JIKAN_BASE = "https://api.jikan.moe/v4";
+const KITSU_BASE = "https://kitsu.io/api/edge";
 const allowedGenres = new Map([
   ["abenteuer", "2"],
   ["comedy", "4"],
   ["fantasy", "10"],
   ["sport", "30"],
+]);
+const kitsuGenres = new Map([
+  ["abenteuer", "adventure"],
+  ["comedy", "comedy"],
+  ["fantasy", "fantasy"],
+  ["sport", "sports"],
 ]);
 
 const fallbackAnime = [
@@ -167,6 +174,114 @@ async function fetchJikan(url: string) {
   throw new Error(`jikan_${lastStatus}`);
 }
 
+type KitsuResource = {
+  id: string;
+  type: string;
+  attributes: {
+    canonicalTitle?: string;
+    titles?: { en?: string; en_jp?: string; ja_jp?: string };
+    synopsis?: string;
+    averageRating?: string;
+    startDate?: string;
+    ageRating?: string | null;
+    ageRatingGuide?: string | null;
+    episodeCount?: number | null;
+    episodeLength?: number | null;
+    status?: string;
+    subtype?: string;
+    posterImage?: { small?: string; medium?: string; large?: string };
+  };
+  relationships?: {
+    categories?: { data?: { id: string }[] };
+  };
+};
+
+async function fetchKitsu(query?: string, genre?: string) {
+  const params = new URLSearchParams({
+    "page[limit]": "12",
+    include: "categories",
+  });
+  if (query) params.set("filter[text]", query);
+  const category = genre ? kitsuGenres.get(genre) : null;
+  if (category) params.set("filter[categories]", category);
+
+  const response = await fetch(`${KITSU_BASE}/anime?${params}`, {
+    headers: {
+      Accept: "application/vnd.api+json",
+      "Content-Type": "application/vnd.api+json",
+      "User-Agent": "EvoliX/1.0 (youth-safe anime explorer)",
+    },
+    next: { revalidate: 3600 },
+    signal: AbortSignal.timeout(9000),
+  });
+  if (!response.ok) throw new Error(`kitsu_${response.status}`);
+  const payload = (await response.json()) as {
+    data: KitsuResource[];
+    included?: KitsuResource[];
+  };
+  const categoryNames = new Map(
+    (payload.included ?? [])
+      .filter((entry) => entry.type === "categories")
+      .map((entry) => [
+        entry.id,
+        entry.attributes.canonicalTitle ?? "Anime",
+      ]),
+  );
+
+  return payload.data
+    .filter(({ attributes }) => {
+      const rating = attributes.ageRating ?? "";
+      return rating !== "R" && rating !== "R18";
+    })
+    .map(({ id, attributes, relationships }) => ({
+      mal_id: -100000 - Number(id),
+      title:
+        attributes.canonicalTitle ??
+        attributes.titles?.en_jp ??
+        attributes.titles?.en ??
+        "Unbekannter Anime",
+      title_english:
+        attributes.titles?.en ?? attributes.titles?.en_jp ?? null,
+      title_japanese: attributes.titles?.ja_jp ?? null,
+      images: {
+        webp: {
+          image_url:
+            attributes.posterImage?.medium ??
+            attributes.posterImage?.small ??
+            "",
+          large_image_url:
+            attributes.posterImage?.large ??
+            attributes.posterImage?.medium ??
+            "",
+        },
+      },
+      score: attributes.averageRating
+        ? Number(attributes.averageRating) / 10
+        : null,
+      year: attributes.startDate
+        ? Number(attributes.startDate.slice(0, 4))
+        : null,
+      rating:
+        attributes.ageRatingGuide ??
+        attributes.ageRating ??
+        "Nicht eingestuft",
+      synopsis: attributes.synopsis ?? null,
+      episodes: attributes.episodeCount ?? null,
+      status: attributes.status ?? null,
+      type: attributes.subtype?.toUpperCase() ?? "Anime",
+      duration: attributes.episodeLength
+        ? `${attributes.episodeLength} min pro Folge`
+        : null,
+      source: "Kitsu",
+      genres: (relationships?.categories?.data ?? [])
+        .map(({ id: categoryId }) => categoryNames.get(categoryId))
+        .filter((name): name is string => Boolean(name))
+        .map((name) => ({ name })),
+      studios: [],
+      trailer: null,
+    }));
+}
+
 export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get("q")?.trim().slice(0, 80);
   const genre = request.nextUrl.searchParams.get("genre")?.toLowerCase();
@@ -219,6 +334,20 @@ export async function GET(request: NextRequest) {
       source: "jikan",
     });
   } catch {
+    try {
+      const kitsuData = await fetchKitsu(query, genre);
+      if (kitsuData.length) {
+        return NextResponse.json({
+          data: kitsuData,
+          source: "kitsu",
+          notice:
+            "Jikan macht gerade Pause – die Live-Ergebnisse kommen automatisch aus dem Kitsu-Archiv.",
+        });
+      }
+    } catch {
+      // Die kuratierte, bildunabhängige Auswahl bleibt als letzte Sicherung.
+    }
+
     const normalized = `${query ?? ""} ${genre ?? ""}`.toLowerCase();
     const matches = fallbackAnime.filter((anime) => {
       const searchText = [
