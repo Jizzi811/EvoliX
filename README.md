@@ -15,8 +15,9 @@ Pokémon-Wissen, Anime-Entdeckungen, Alltag und eigene Quests.
 - holografische Sammelkarten-Suche über die mehrsprachige TCGdex API
 - lokale Trainer-Chronik für Team und gespeicherte Entdeckungen
 - jugendgefiltertes Anime-Archiv über eine gecachte EvoliX-Serverroute zu
-  Jikan (`sfw=true`) mit Entdeckungsportalen, Detailansicht, Trailern,
-  Empfehlungen und kuratierter Ausfallsicherung
+  Jikan (`sfw=true`) mit Kitsu als zweiter Live-Datenquelle,
+  Entdeckungsportalen, Detailansicht, Trailern, Empfehlungen und kuratierter
+  Ausfallsicherung
 - neu entwickelte holografische Motion-Karten
 - responsive Oberfläche für Desktop und Mobilgeräte
 - serverseitiger OpenAI-Zugang; kein API-Schlüssel im Browser
