@@ -10,6 +10,7 @@ import {
   Crown,
   Gamepad2,
   Images,
+  Map,
   Menu,
   MessageCircle,
   ShieldCheck,
@@ -28,6 +29,7 @@ import { PokemonQuiz } from "@/components/pokemon-quiz";
 import { TcgGallery } from "@/components/tcg-gallery";
 import { TrainerDashboard } from "@/components/trainer-dashboard";
 import { VoiceChat } from "@/components/voice-chat";
+import { RiftRun } from "@/components/rift-run";
 import type { EvoliXMode } from "@/lib/evolix-prompt";
 import { TrainerProvider, useTrainer } from "@/lib/trainer-progress";
 
@@ -39,6 +41,7 @@ type Section =
   | "quiz"
   | "tcg"
   | "arena"
+  | "rift"
   | "trainer";
 
 const modeCopy: Record<
@@ -138,6 +141,12 @@ function EvoliXApp() {
             onClick={() => navigate("arena", "pokemon")}
           >
             Arena
+          </button>
+          <button
+            className={section === "rift" ? "active" : ""}
+            onClick={() => navigate("rift", "quest")}
+          >
+            Rift
           </button>
           <button
             className={section === "quest" ? "active" : ""}
@@ -247,7 +256,7 @@ function EvoliXApp() {
               <div className="section-heading">
                 <div>
                   <span className="section-kicker">WÄHLE DEIN PORTAL</span>
-                  <h2>Acht Portale. Ein EvoliX.</h2>
+                  <h2>Neun Portale. Ein EvoliX.</h2>
                 </div>
                 <p>
                   Jede Welt verändert EvoliX&apos; Fokus – seine Persönlichkeit
@@ -311,6 +320,14 @@ function EvoliXApp() {
                   icon={<Crown />}
                   accent="rose"
                   onClick={() => navigate("arena", "pokemon")}
+                />
+                <HoloCard
+                  eyebrow="ROGUELITE"
+                  title="Rift Run"
+                  text="Verzweigte Wege, taktische Kämpfe, Relikte und ein Rift-Wächter."
+                  icon={<Map />}
+                  accent="violet"
+                  onClick={() => navigate("rift", "quest")}
                 />
                 <HoloCard
                   eyebrow="DEIN FORTSCHRITT"
@@ -448,6 +465,17 @@ function EvoliXApp() {
               exit={{ opacity: 0, y: -12 }}
             >
               <PokemonArena />
+            </motion.div>
+          )}
+
+          {section === "rift" && (
+            <motion.div
+              key="rift"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+            >
+              <RiftRun />
             </motion.div>
           )}
 

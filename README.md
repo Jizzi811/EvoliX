@@ -17,6 +17,8 @@ Pokémon-Wissen, Anime-Entdeckungen, Alltag und eigene Quests.
   Attacken, Varianten, Cardmarket-Richtwerte und lokale Sammlung
 - spielbare EvoliX-Arena mit Drei-Bahnen-Auto-Kämpfen, Typvorteilen,
   Team-Synergien, wechselnden Gegnergruppen, XP und Arena-Erfolgen
+- browsernatives Roguelite `Rift Run` mit verzweigter Raumkarte, taktischen
+  Kämpfen, Rastplätzen, Ereignissen, Relikten, Bosskampf und Meta-Fortschritt
 - lokale Trainer-Chronik für Team und gespeicherte Entdeckungen
 - jugendgefiltertes Anime-Archiv über eine gecachte EvoliX-Serverroute zu
   Jikan (`sfw=true`) mit Kitsu als zweiter Live-Datenquelle,
