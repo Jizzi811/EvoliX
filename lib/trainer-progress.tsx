@@ -48,6 +48,8 @@ type TrainerState = {
   watchlist: AnimeWatchItem[];
   arenaWins: number;
   arenaBattles: number;
+  riftBosses: number;
+  riftRuns: number;
 };
 
 type TrainerContextValue = TrainerState & {
@@ -66,6 +68,7 @@ type TrainerContextValue = TrainerState & {
   setWatchStatus: (id: number, status: WatchStatus) => void;
   removeFromWatchlist: (id: number) => void;
   completeArenaBattle: (won: boolean) => number;
+  completeRiftRun: (bossDefeated: boolean) => number;
 };
 
 const initialState: TrainerState = {
@@ -79,6 +82,8 @@ const initialState: TrainerState = {
   watchlist: [],
   arenaWins: 0,
   arenaBattles: 0,
+  riftBosses: 0,
+  riftRuns: 0,
 };
 
 const TrainerContext = createContext<TrainerContextValue | null>(null);
@@ -121,6 +126,12 @@ function readStoredState(): TrainerState {
         typeof stored.arenaBattles === "number"
           ? Math.max(0, stored.arenaBattles)
           : 0,
+      riftBosses:
+        typeof stored.riftBosses === "number"
+          ? Math.max(0, stored.riftBosses)
+          : 0,
+      riftRuns:
+        typeof stored.riftRuns === "number" ? Math.max(0, stored.riftRuns) : 0,
     };
   } catch {
     return initialState;
@@ -267,6 +278,17 @@ export function TrainerProvider({ children }: { children: ReactNode }) {
     return earned;
   }, []);
 
+  const completeRiftRun = useCallback((bossDefeated: boolean) => {
+    const earned = bossDefeated ? 90 : 18;
+    setState((current) => ({
+      ...current,
+      xp: current.xp + earned,
+      riftBosses: current.riftBosses + (bossDefeated ? 1 : 0),
+      riftRuns: current.riftRuns + 1,
+    }));
+    return earned;
+  }, []);
+
   const level = Math.floor(state.xp / 150) + 1;
   const levelXp = state.xp % 150;
   const achievements = useMemo(
@@ -314,12 +336,18 @@ export function TrainerProvider({ children }: { children: ReactNode }) {
         detail: "Gewinne drei Kämpfe in der EvoliX-Arena.",
         unlocked: state.arenaWins >= 3,
       },
+      {
+        title: "Rissbezwinger",
+        detail: "Besiege den Wächter in Rift Run.",
+        unlocked: state.riftBosses >= 1,
+      },
     ],
     [
       state.animeQuizBest,
       state.arenaWins,
       state.favorites,
       state.quizBest,
+      state.riftBosses,
       state.team.length,
       state.watchlist,
     ],
@@ -343,6 +371,7 @@ export function TrainerProvider({ children }: { children: ReactNode }) {
       setWatchStatus,
       removeFromWatchlist,
       completeArenaBattle,
+      completeRiftRun,
     }),
     [
       achievements,
@@ -350,6 +379,7 @@ export function TrainerProvider({ children }: { children: ReactNode }) {
       addToWatchlist,
       completeAnimeQuiz,
       completeArenaBattle,
+      completeRiftRun,
       completeQuiz,
       isDiscoverySaved,
       level,
