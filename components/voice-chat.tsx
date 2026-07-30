@@ -30,18 +30,49 @@ export function VoiceChat({
   const [input, setInput] = useState("");
   const [state, setState] = useState<VoiceState>("idle");
   const [error, setError] = useState("");
+  const [conversationActive, setConversationActive] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const requestAbortRef = useRef<AbortController | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
+  const messagesRef = useRef(messages);
+  const conversationActiveRef = useRef(false);
+  const processingRef = useRef(false);
+  const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const startListeningRef = useRef<() => void>(() => {});
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [messages]);
 
+  const scheduleListening = useCallback((delay = 350) => {
+    if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
+    restartTimerRef.current = setTimeout(() => {
+      if (
+        conversationActiveRef.current &&
+        !processingRef.current &&
+        !audioRef.current
+      ) {
+        startListeningRef.current();
+      }
+    }, delay);
+  }, []);
+
   const speak = useCallback(async (text: string) => {
     audioRef.current?.pause();
     window.speechSynthesis?.cancel();
     setState("thinking");
+
+    const finishSpeaking = () => {
+      audioRef.current = null;
+      processingRef.current = false;
+      setState("idle");
+      scheduleListening();
+    };
 
     try {
       const response = await fetch("/api/speech", {
@@ -57,19 +88,17 @@ export function VoiceChat({
       audio.onplay = () => setState("speaking");
       audio.onended = () => {
         URL.revokeObjectURL(audioUrl);
-        audioRef.current = null;
-        setState("idle");
+        finishSpeaking();
       };
       audio.onerror = () => {
         URL.revokeObjectURL(audioUrl);
-        audioRef.current = null;
-        setState("idle");
+        finishSpeaking();
       };
       await audio.play();
       return;
     } catch {
       if (!("speechSynthesis" in window)) {
-        setState("idle");
+        finishSpeaking();
         return;
       }
 
@@ -78,27 +107,35 @@ export function VoiceChat({
       utterance.rate = 0.98;
       utterance.pitch = 1.05;
       utterance.onstart = () => setState("speaking");
-      utterance.onend = () => setState("idle");
-      utterance.onerror = () => setState("idle");
+      utterance.onend = finishSpeaking;
+      utterance.onerror = finishSpeaking;
       window.speechSynthesis.speak(utterance);
     }
-  }, []);
+  }, [scheduleListening]);
 
   const send = useCallback(
     async (content: string, useVoice = false) => {
       const clean = content.trim();
-      if (!clean || state === "thinking") return;
+      if (!clean || processingRef.current) return;
+      processingRef.current = true;
       setError("");
-      const nextMessages = [...messages, { role: "user" as const, content: clean }];
+      const nextMessages = [
+        ...messagesRef.current,
+        { role: "user" as const, content: clean },
+      ];
+      messagesRef.current = nextMessages;
       setMessages(nextMessages);
       setInput("");
       setState("thinking");
+      const requestController = new AbortController();
+      requestAbortRef.current = requestController;
 
       try {
         const response = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ messages: nextMessages, mode }),
+          signal: requestController.signal,
         });
         const payload = (await response.json()) as {
           message?: string;
@@ -108,38 +145,50 @@ export function VoiceChat({
           throw new Error(payload.error || "Keine Antwort");
         }
         const answer = { role: "assistant" as const, content: payload.message };
-        setMessages((current) => [...current, answer]);
+        const answeredMessages = [...messagesRef.current, answer];
+        requestAbortRef.current = null;
+        messagesRef.current = answeredMessages;
+        setMessages(answeredMessages);
         if (useVoice) void speak(answer.content);
-        else setState("idle");
+        else {
+          processingRef.current = false;
+          setState("idle");
+          scheduleListening();
+        }
       } catch (requestError) {
+        requestAbortRef.current = null;
+        processingRef.current = false;
         setState("idle");
+        if (requestError instanceof DOMException && requestError.name === "AbortError") {
+          return;
+        }
         setError(
           requestError instanceof Error
             ? requestError.message
             : "Die Verbindung ist unterbrochen.",
         );
+        scheduleListening(900);
       }
     },
-    [messages, mode, speak, state],
+    [mode, scheduleListening, speak],
   );
 
-  function startListening() {
+  const startListening = useCallback(() => {
+    if (
+      !conversationActiveRef.current ||
+      processingRef.current ||
+      recognitionRef.current
+    ) {
+      return;
+    }
+
     setError("");
-    if (state === "speaking") {
-      audioRef.current?.pause();
-      audioRef.current = null;
-      window.speechSynthesis?.cancel();
-      setState("idle");
-      return;
-    }
-    if (state === "listening") {
-      recognitionRef.current?.stop();
-      return;
-    }
 
     const Recognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!Recognition) {
+      conversationActiveRef.current = false;
+      setConversationActive(false);
       setError(
         "Spracherkennung wird in diesem Browser nicht unterstützt. Chrome oder Edge funktionieren am besten.",
       );
@@ -151,6 +200,7 @@ export function VoiceChat({
     recognition.lang = "de-DE";
     recognition.continuous = false;
     recognition.interimResults = true;
+    let receivedFinalResult = false;
     setState("listening");
 
     recognition.onresult = (event) => {
@@ -164,28 +214,71 @@ export function VoiceChat({
       }
       setInput(transcript);
       if (finalTranscript.trim()) {
+        receivedFinalResult = true;
+        recognitionRef.current = null;
         void send(finalTranscript, true);
       }
     };
     recognition.onerror = (event) => {
+      recognitionRef.current = null;
       setState("idle");
-      if (event.error !== "aborted") {
+      if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+        conversationActiveRef.current = false;
+        setConversationActive(false);
+        setError("Bitte erlaube den Mikrofonzugriff, damit EvoliX zuhören kann.");
+      } else if (event.error !== "aborted" && event.error !== "no-speech") {
         setError("Ich konnte dich nicht verstehen. Versuch es bitte noch einmal.");
       }
     };
     recognition.onend = () => {
+      recognitionRef.current = null;
       setState((current) => (current === "listening" ? "idle" : current));
+      if (!receivedFinalResult) scheduleListening(250);
     };
     recognition.start();
+  }, [scheduleListening, send]);
+
+  useEffect(() => {
+    startListeningRef.current = startListening;
+  }, [startListening]);
+
+  useEffect(
+    () => () => {
+      conversationActiveRef.current = false;
+      if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
+      recognitionRef.current?.abort();
+      audioRef.current?.pause();
+      requestAbortRef.current?.abort();
+      window.speechSynthesis?.cancel();
+    },
+    [],
+  );
+
+  function toggleConversation() {
+    if (conversationActiveRef.current) {
+      stopConversation();
+      return;
+    }
+
+    conversationActiveRef.current = true;
+    setConversationActive(true);
+    startListeningRef.current();
   }
 
   function submit(event: FormEvent) {
     event.preventDefault();
-    void send(input);
+    void send(input, conversationActiveRef.current);
   }
 
-  function stopAudio() {
+  function stopConversation() {
+    conversationActiveRef.current = false;
+    setConversationActive(false);
+    processingRef.current = false;
+    if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
     recognitionRef.current?.abort();
+    recognitionRef.current = null;
+    requestAbortRef.current?.abort();
+    requestAbortRef.current = null;
     audioRef.current?.pause();
     audioRef.current = null;
     window.speechSynthesis?.cancel();
@@ -206,10 +299,12 @@ export function VoiceChat({
                 ? "EvoliX denkt nach"
                 : state === "speaking"
                   ? "EvoliX spricht"
+                  : conversationActive
+                    ? "Gespräch läuft"
                   : "EvoliX ist bereit"}
           </span>
-          {state !== "idle" && (
-            <button onClick={stopAudio} aria-label="Sprachausgabe stoppen">
+          {conversationActive && (
+            <button onClick={stopConversation} aria-label="Gespräch beenden">
               <X />
             </button>
           )}
@@ -245,10 +340,15 @@ export function VoiceChat({
           <button
             type="button"
             className={`mic-button ${state}`}
-            onClick={startListening}
-            aria-label={state === "listening" ? "Aufnahme stoppen" : "Sprechen"}
+            onClick={toggleConversation}
+            aria-pressed={conversationActive}
+            aria-label={
+              conversationActive
+                ? "Gespräch beenden"
+                : "Dauergespräch mit EvoliX starten"
+            }
           >
-            {state === "listening" ? <Square /> : <Mic />}
+            {conversationActive ? <Square /> : <Mic />}
           </button>
           <input
             value={input}
@@ -256,6 +356,8 @@ export function VoiceChat({
             placeholder={
               state === "listening"
                 ? "Ich höre dir zu …"
+                : conversationActive
+                  ? "Gespräch läuft – ich höre gleich wieder zu …"
                 : "Frag EvoliX oder sprich mit ihm …"
             }
             disabled={state === "thinking"}
