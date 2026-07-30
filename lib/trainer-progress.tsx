@@ -46,6 +46,8 @@ type TrainerState = {
   quizRounds: number;
   animeQuizBest: number;
   watchlist: AnimeWatchItem[];
+  arenaWins: number;
+  arenaBattles: number;
 };
 
 type TrainerContextValue = TrainerState & {
@@ -63,6 +65,7 @@ type TrainerContextValue = TrainerState & {
   addToWatchlist: (anime: Omit<AnimeWatchItem, "status">) => void;
   setWatchStatus: (id: number, status: WatchStatus) => void;
   removeFromWatchlist: (id: number) => void;
+  completeArenaBattle: (won: boolean) => number;
 };
 
 const initialState: TrainerState = {
@@ -74,6 +77,8 @@ const initialState: TrainerState = {
   quizRounds: 0,
   animeQuizBest: 0,
   watchlist: [],
+  arenaWins: 0,
+  arenaBattles: 0,
 };
 
 const TrainerContext = createContext<TrainerContextValue | null>(null);
@@ -108,6 +113,14 @@ function readStoredState(): TrainerState {
       watchlist: Array.isArray(stored.watchlist)
         ? stored.watchlist.slice(0, 40)
         : [],
+      arenaWins:
+        typeof stored.arenaWins === "number"
+          ? Math.max(0, stored.arenaWins)
+          : 0,
+      arenaBattles:
+        typeof stored.arenaBattles === "number"
+          ? Math.max(0, stored.arenaBattles)
+          : 0,
     };
   } catch {
     return initialState;
@@ -243,6 +256,17 @@ export function TrainerProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const completeArenaBattle = useCallback((won: boolean) => {
+    const earned = won ? 30 : 8;
+    setState((current) => ({
+      ...current,
+      xp: current.xp + earned,
+      arenaWins: current.arenaWins + (won ? 1 : 0),
+      arenaBattles: current.arenaBattles + 1,
+    }));
+    return earned;
+  }, []);
+
   const level = Math.floor(state.xp / 150) + 1;
   const levelXp = state.xp % 150;
   const achievements = useMemo(
@@ -285,9 +309,15 @@ export function TrainerProvider({ children }: { children: ReactNode }) {
           state.watchlist.filter((entry) => entry.status === "completed")
             .length >= 3,
       },
+      {
+        title: "Arena-Stratege",
+        detail: "Gewinne drei Kämpfe in der EvoliX-Arena.",
+        unlocked: state.arenaWins >= 3,
+      },
     ],
     [
       state.animeQuizBest,
+      state.arenaWins,
       state.favorites,
       state.quizBest,
       state.team.length,
@@ -312,12 +342,14 @@ export function TrainerProvider({ children }: { children: ReactNode }) {
       addToWatchlist,
       setWatchStatus,
       removeFromWatchlist,
+      completeArenaBattle,
     }),
     [
       achievements,
       addPokemon,
       addToWatchlist,
       completeAnimeQuiz,
+      completeArenaBattle,
       completeQuiz,
       isDiscoverySaved,
       level,

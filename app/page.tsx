@@ -7,6 +7,7 @@ import {
   Brain,
   ChevronDown,
   Compass,
+  Crown,
   Gamepad2,
   Images,
   Menu,
@@ -22,6 +23,7 @@ import {
 import { AnimeExplorer } from "@/components/anime-explorer";
 import { HoloCard } from "@/components/holo-card";
 import { PokemonExplorer } from "@/components/pokemon-explorer";
+import { PokemonArena } from "@/components/pokemon-arena";
 import { PokemonQuiz } from "@/components/pokemon-quiz";
 import { TcgGallery } from "@/components/tcg-gallery";
 import { TrainerDashboard } from "@/components/trainer-dashboard";
@@ -36,6 +38,7 @@ type Section =
   | "quest"
   | "quiz"
   | "tcg"
+  | "arena"
   | "trainer";
 
 const modeCopy: Record<
@@ -129,6 +132,12 @@ function EvoliXApp() {
             onClick={() => navigate("tcg", "pokemon")}
           >
             Karten
+          </button>
+          <button
+            className={section === "arena" ? "active" : ""}
+            onClick={() => navigate("arena", "pokemon")}
+          >
+            Arena
           </button>
           <button
             className={section === "quest" ? "active" : ""}
@@ -238,7 +247,7 @@ function EvoliXApp() {
               <div className="section-heading">
                 <div>
                   <span className="section-kicker">WÄHLE DEIN PORTAL</span>
-                  <h2>Sieben Portale. Ein EvoliX.</h2>
+                  <h2>Acht Portale. Ein EvoliX.</h2>
                 </div>
                 <p>
                   Jede Welt verändert EvoliX&apos; Fokus – seine Persönlichkeit
@@ -294,6 +303,14 @@ function EvoliXApp() {
                   icon={<Trophy />}
                   accent="amber"
                   onClick={() => navigate("quiz", "pokemon")}
+                />
+                <HoloCard
+                  eyebrow="AUTO-TAKTIK"
+                  title="EvoliX-Arena"
+                  text="Drei Einheiten aufstellen, Typen kombinieren und Kämpfe gewinnen."
+                  icon={<Crown />}
+                  accent="rose"
+                  onClick={() => navigate("arena", "pokemon")}
                 />
                 <HoloCard
                   eyebrow="DEIN FORTSCHRITT"
@@ -420,6 +437,17 @@ function EvoliXApp() {
               exit={{ opacity: 0, y: -12 }}
             >
               <TcgGallery />
+            </motion.div>
+          )}
+
+          {section === "arena" && (
+            <motion.div
+              key="arena"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+            >
+              <PokemonArena />
             </motion.div>
           )}
 

@@ -15,6 +15,8 @@ Pokémon-Wissen, Anime-Entdeckungen, Alltag und eigene Quests.
 - vollständiges Karten-Labor über eine gecachte EvoliX-Serverroute zur
   mehrsprachigen TCGdex API: deutsche Kartensuche, Sets, Seltenheiten,
   Attacken, Varianten, Cardmarket-Richtwerte und lokale Sammlung
+- spielbare EvoliX-Arena mit Drei-Bahnen-Auto-Kämpfen, Typvorteilen,
+  Team-Synergien, wechselnden Gegnergruppen, XP und Arena-Erfolgen
 - lokale Trainer-Chronik für Team und gespeicherte Entdeckungen
 - jugendgefiltertes Anime-Archiv über eine gecachte EvoliX-Serverroute zu
   Jikan (`sfw=true`) mit Kitsu als zweiter Live-Datenquelle,
