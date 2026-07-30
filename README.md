@@ -12,7 +12,9 @@ Pokémon-Wissen, Anime-Entdeckungen, Alltag und eigene Quests.
 - deutscher Kristall-Dex mit Basiswerten, Attacken und Entwicklungspfaden
 - lokaler Teamplaner für bis zu sechs Pokémon
 - Pokémon-Quiz mit XP, Leveln, Rekorden und Erfolgen
-- holografische Sammelkarten-Suche über die mehrsprachige TCGdex API
+- vollständiges Karten-Labor über eine gecachte EvoliX-Serverroute zur
+  mehrsprachigen TCGdex API: deutsche Kartensuche, Sets, Seltenheiten,
+  Attacken, Varianten, Cardmarket-Richtwerte und lokale Sammlung
 - lokale Trainer-Chronik für Team und gespeicherte Entdeckungen
 - jugendgefiltertes Anime-Archiv über eine gecachte EvoliX-Serverroute zu
   Jikan (`sfw=true`) mit Kitsu als zweiter Live-Datenquelle,
