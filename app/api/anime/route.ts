@@ -14,6 +14,21 @@ const kitsuGenres = new Map([
   ["fantasy", "fantasy"],
   ["sport", "sports"],
 ]);
+const blockedCategoryTerms = [
+  "adult",
+  "ecchi",
+  "erotica",
+  "hentai",
+  "mature",
+  "nudity",
+];
+const blockedContentTerms = [
+  "cigarette",
+  "erotic",
+  "explicit",
+  "nudity",
+  "smoking",
+];
 
 const fallbackAnime = [
   {
@@ -146,12 +161,18 @@ type JikanAnime = (typeof fallbackAnime)[number] & {
 };
 
 function isYouthSuitable(anime: JikanAnime) {
-  const rating = anime.rating ?? "";
+  const rating = anime.rating?.toUpperCase() ?? "";
+  const categories = anime.genres?.map(({ name }) => name.toLowerCase()) ?? [];
+  const content = `${anime.title} ${anime.title_english ?? ""} ${
+    anime.synopsis ?? ""
+  }`.toLowerCase();
+
   return (
-    !rating.startsWith("R") &&
-    !anime.genres?.some(({ name }) =>
-      ["Ecchi", "Erotica", "Hentai"].includes(name),
-    )
+    (rating.startsWith("G") || rating.startsWith("PG")) &&
+    !categories.some((category) =>
+      blockedCategoryTerms.some((term) => category.includes(term)),
+    ) &&
+    !blockedContentTerms.some((term) => content.includes(term))
   );
 }
 
@@ -244,9 +265,25 @@ async function fetchKitsu(
   );
 
   return payload.data
-    .filter(({ attributes }) => {
-      const rating = attributes.ageRating ?? "";
-      return rating !== "R" && rating !== "R18";
+    .filter(({ attributes, relationships }) => {
+      const rating = attributes.ageRating?.toUpperCase();
+      const categories = (relationships?.categories?.data ?? [])
+        .map(({ id }) => categoryNames.get(id)?.toLowerCase())
+        .filter((name): name is string => Boolean(name));
+      const content = `${
+        attributes.canonicalTitle ??
+        attributes.titles?.en_jp ??
+        attributes.titles?.en ??
+        ""
+      } ${attributes.synopsis ?? ""}`.toLowerCase();
+
+      return (
+        (rating === "G" || rating === "PG") &&
+        !categories.some((category) =>
+          blockedCategoryTerms.some((term) => category.includes(term)),
+        ) &&
+        !blockedContentTerms.some((term) => content.includes(term))
+      );
     })
     .map(({ id, attributes, relationships }) => ({
       mal_id: -100000 - Number(id),
