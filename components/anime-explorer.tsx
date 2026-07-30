@@ -6,17 +6,24 @@ import { type FormEvent, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
   BookOpen,
+  BrainCircuit,
   CalendarDays,
+  Compass,
   Clock3,
   ExternalLink,
   Film,
   Heart,
+  ListChecks,
   Play,
   Search,
   Sparkles,
   Star,
+  UserSearch,
   Users,
 } from "lucide-react";
+import { AnimeCharacters } from "@/components/anime-characters";
+import { AnimeQuiz } from "@/components/anime-quiz";
+import { AnimeWatchlist } from "@/components/anime-watchlist";
 import { useTrainer } from "@/lib/trainer-progress";
 
 type Anime = {
@@ -52,7 +59,13 @@ type AnimeResponse = {
 };
 
 const discoveryPortals = [
+  { label: "Aktuell", endpoint: "/api/anime?mode=current", icon: "◌" },
   { label: "Pokémon-Welten", query: "Pokemon", icon: "✦" },
+  {
+    label: "Pokémon-Filme",
+    endpoint: "/api/anime?q=Pokemon&format=movie",
+    icon: "▶",
+  },
   { label: "Fantasy", genre: "fantasy", icon: "ᛉ" },
   { label: "Abenteuer", genre: "abenteuer", icon: "⚔" },
   { label: "Comedy", genre: "comedy", icon: "☀" },
@@ -71,14 +84,19 @@ function coverFor(anime: Anime) {
   );
 }
 
-export function AnimeExplorer() {
+function AnimeArchive() {
   const [query, setQuery] = useState("Pokemon");
   const [results, setResults] = useState<Anime[]>([]);
   const [selected, setSelected] = useState<Anime | null>(null);
   const [recommendations, setRecommendations] = useState<Anime[]>([]);
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
-  const { toggleDiscovery, isDiscoverySaved } = useTrainer();
+  const {
+    toggleDiscovery,
+    isDiscoverySaved,
+    addToWatchlist,
+    watchlist,
+  } = useTrainer();
 
   async function load(endpoint: string) {
     setLoading(true);
@@ -140,17 +158,7 @@ export function AnimeExplorer() {
   }
 
   return (
-    <section className="explorer-panel anime-panel">
-      <div className="panel-heading">
-        <div>
-          <span className="section-kicker">
-            STERNENARCHIV · JUGENDGEFILTERT
-          </span>
-          <h2>Serien, Welten und neue Empfehlungen.</h2>
-        </div>
-        <Star />
-      </div>
-
+    <>
       <div className="anime-portals" aria-label="Anime-Kategorien">
         {discoveryPortals.map((portal) => (
           <button
@@ -158,9 +166,10 @@ export function AnimeExplorer() {
             onClick={() => {
               if (portal.query) setQuery(portal.query);
               void load(
-                portal.query
+                portal.endpoint ??
+                  (portal.query
                   ? `/api/anime?q=${encodeURIComponent(portal.query)}`
-                  : `/api/anime?genre=${portal.genre}`,
+                  : `/api/anime?genre=${portal.genre}`),
               );
             }}
           >
@@ -286,6 +295,32 @@ export function AnimeExplorer() {
                       : "Merken · +5 XP"}
                   </button>
                 ) : null}
+                {coverFor(selected) ? (
+                  <button
+                    className={
+                      watchlist.some((entry) => entry.id === selected.mal_id)
+                        ? "saved"
+                        : ""
+                    }
+                    onClick={() =>
+                      addToWatchlist({
+                        id: selected.mal_id,
+                        name: displayTitle(selected),
+                        image: coverFor(selected),
+                        episodes: selected.episodes ?? null,
+                        year: selected.year ?? null,
+                      })
+                    }
+                    disabled={watchlist.some(
+                      (entry) => entry.id === selected.mal_id,
+                    )}
+                  >
+                    <ListChecks />
+                    {watchlist.some((entry) => entry.id === selected.mal_id)
+                      ? "Auf der Watchlist"
+                      : "Auf die Watchlist · +8 XP"}
+                  </button>
+                ) : null}
               </div>
             </div>
 
@@ -383,6 +418,94 @@ export function AnimeExplorer() {
             </p>
           </motion.div>
         )}
+      </AnimatePresence>
+    </>
+  );
+}
+
+type AnimeArea = "discover" | "characters" | "watchlist" | "quiz";
+
+const animeAreas: {
+  id: AnimeArea;
+  label: string;
+  detail: string;
+  icon: typeof Compass;
+}[] = [
+  {
+    id: "discover",
+    label: "Entdecken",
+    detail: "Aktuell, Suche & Welten",
+    icon: Compass,
+  },
+  {
+    id: "characters",
+    label: "Figuren",
+    detail: "Helden & Fähigkeiten",
+    icon: UserSearch,
+  },
+  {
+    id: "watchlist",
+    label: "Watchlist",
+    detail: "Planen & Fortschritt",
+    icon: ListChecks,
+  },
+  {
+    id: "quiz",
+    label: "Anime-Quiz",
+    detail: "Wissen & XP",
+    icon: BrainCircuit,
+  },
+];
+
+export function AnimeExplorer() {
+  const [area, setArea] = useState<AnimeArea>("discover");
+
+  return (
+    <section className="explorer-panel anime-panel">
+      <div className="panel-heading">
+        <div>
+          <span className="section-kicker">
+            ANIME-NEXUS · JUGENDGEFILTERT
+          </span>
+          <h2>Mehr als ein Archiv.</h2>
+        </div>
+        <Star />
+      </div>
+      <nav className="anime-area-nav" aria-label="Anime-Bereiche">
+        {animeAreas.map((item) => {
+          const Icon = item.icon;
+          return (
+            <button
+              key={item.id}
+              className={area === item.id ? "active" : ""}
+              onClick={() => setArea(item.id)}
+            >
+              <Icon />
+              <span>
+                <strong>{item.label}</strong>
+                <small>{item.detail}</small>
+              </span>
+            </button>
+          );
+        })}
+      </nav>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={area}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+        >
+          {area === "discover" ? (
+            <AnimeArchive />
+          ) : area === "characters" ? (
+            <AnimeCharacters />
+          ) : area === "watchlist" ? (
+            <AnimeWatchlist />
+          ) : (
+            <AnimeQuiz />
+          )}
+        </motion.div>
       </AnimatePresence>
     </section>
   );

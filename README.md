@@ -18,6 +18,8 @@ Pokémon-Wissen, Anime-Entdeckungen, Alltag und eigene Quests.
   Jikan (`sfw=true`) mit Kitsu als zweiter Live-Datenquelle,
   Entdeckungsportalen, Detailansicht, Trailern, Empfehlungen und kuratierter
   Ausfallsicherung
+- vollständiger Anime-Nexus mit aktuellen Serien, eigenem Pokémon-Filmportal,
+  Figuren-Kodex, lokaler Watchlist und Anime-Quiz mit XP
 - neu entwickelte holografische Motion-Karten
 - responsive Oberfläche für Desktop und Mobilgeräte
 - serverseitiger OpenAI-Zugang; kein API-Schlüssel im Browser

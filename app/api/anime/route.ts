@@ -198,7 +198,12 @@ type KitsuResource = {
   };
 };
 
-async function fetchKitsu(query?: string, genre?: string) {
+async function fetchKitsu(
+  query?: string,
+  genre?: string,
+  mode?: string | null,
+  format?: string | null,
+) {
   const params = new URLSearchParams({
     "page[limit]": "12",
     include: "categories",
@@ -206,6 +211,11 @@ async function fetchKitsu(query?: string, genre?: string) {
   if (query) params.set("filter[text]", query);
   const category = genre ? kitsuGenres.get(genre) : null;
   if (category) params.set("filter[categories]", category);
+  if (mode === "current") {
+    params.set("filter[status]", "current");
+    params.set("sort", "-averageRating");
+  }
+  if (format === "movie") params.set("filter[subtype]", "movie");
 
   const response = await fetch(`${KITSU_BASE}/anime?${params}`, {
     headers: {
@@ -290,6 +300,8 @@ async function fetchKitsu(query?: string, genre?: string) {
 export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get("q")?.trim().slice(0, 80);
   const genre = request.nextUrl.searchParams.get("genre")?.toLowerCase();
+  const mode = request.nextUrl.searchParams.get("mode");
+  const format = request.nextUrl.searchParams.get("format");
   const recommendationsFor = Number(
     request.nextUrl.searchParams.get("recommendations"),
   );
@@ -314,7 +326,7 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  if (!query && !genre) {
+  if (!query && !genre && mode !== "current") {
     return NextResponse.json(
       { error: "search_required" },
       { status: 400 },
@@ -330,9 +342,14 @@ export async function GET(request: NextRequest) {
   });
   if (query) params.set("q", query);
   if (genreId) params.set("genres", genreId);
+  if (format === "movie") params.set("type", "movie");
 
   try {
-    const response = await fetchJikan(`${JIKAN_BASE}/anime?${params}`);
+    const response = await fetchJikan(
+      mode === "current"
+        ? `${JIKAN_BASE}/seasons/now?sfw=true&limit=12`
+        : `${JIKAN_BASE}/anime?${params}`,
+    );
     const payload = (await response.json()) as { data: JikanAnime[] };
     return NextResponse.json({
       data: payload.data.filter(isYouthSuitable),
@@ -340,13 +357,13 @@ export async function GET(request: NextRequest) {
     });
   } catch {
     try {
-      const kitsuData = await fetchKitsu(query, genre);
+      const kitsuData = await fetchKitsu(query, genre, mode, format);
       if (kitsuData.length) {
         return NextResponse.json({
           data: kitsuData,
           source: "kitsu",
           notice:
-            "Jikan macht gerade Pause – die Live-Ergebnisse kommen automatisch aus dem Kitsu-Archiv.",
+            "Live-Suche aktiv: EvoliX nutzt gerade automatisch seine zweite Anime-Datenquelle.",
         });
       }
     } catch {

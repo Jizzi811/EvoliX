@@ -26,6 +26,17 @@ export type SavedDiscovery = {
   kind: "anime" | "card";
 };
 
+export type WatchStatus = "planned" | "watching" | "completed";
+
+export type AnimeWatchItem = {
+  id: number;
+  name: string;
+  image: string;
+  episodes: number | null;
+  year: number | null;
+  status: WatchStatus;
+};
+
 type TrainerState = {
   trainerName: string;
   xp: number;
@@ -33,6 +44,8 @@ type TrainerState = {
   favorites: SavedDiscovery[];
   quizBest: number;
   quizRounds: number;
+  animeQuizBest: number;
+  watchlist: AnimeWatchItem[];
 };
 
 type TrainerContextValue = TrainerState & {
@@ -46,6 +59,10 @@ type TrainerContextValue = TrainerState & {
   toggleDiscovery: (discovery: SavedDiscovery) => void;
   isDiscoverySaved: (id: string) => boolean;
   completeQuiz: (score: number, total: number) => number;
+  completeAnimeQuiz: (score: number, total: number) => number;
+  addToWatchlist: (anime: Omit<AnimeWatchItem, "status">) => void;
+  setWatchStatus: (id: number, status: WatchStatus) => void;
+  removeFromWatchlist: (id: number) => void;
 };
 
 const initialState: TrainerState = {
@@ -55,6 +72,8 @@ const initialState: TrainerState = {
   favorites: [],
   quizBest: 0,
   quizRounds: 0,
+  animeQuizBest: 0,
+  watchlist: [],
 };
 
 const TrainerContext = createContext<TrainerContextValue | null>(null);
@@ -82,6 +101,13 @@ function readStoredState(): TrainerState {
         typeof stored.quizRounds === "number"
           ? Math.max(0, stored.quizRounds)
           : 0,
+      animeQuizBest:
+        typeof stored.animeQuizBest === "number"
+          ? Math.max(0, stored.animeQuizBest)
+          : 0,
+      watchlist: Array.isArray(stored.watchlist)
+        ? stored.watchlist.slice(0, 40)
+        : [],
     };
   } catch {
     return initialState;
@@ -169,6 +195,54 @@ export function TrainerProvider({ children }: { children: ReactNode }) {
     return earned;
   }, []);
 
+  const completeAnimeQuiz = useCallback((score: number, total: number) => {
+    const earned = score * 10 + (score === total ? 35 : 0);
+    setState((current) => ({
+      ...current,
+      xp: current.xp + earned,
+      animeQuizBest: Math.max(current.animeQuizBest, score),
+    }));
+    return earned;
+  }, []);
+
+  const addToWatchlist = useCallback(
+    (anime: Omit<AnimeWatchItem, "status">) => {
+      setState((current) => {
+        if (current.watchlist.some((entry) => entry.id === anime.id)) {
+          return current;
+        }
+        return {
+          ...current,
+          xp: current.xp + 8,
+          watchlist: [
+            { ...anime, status: "planned" as const },
+            ...current.watchlist,
+          ].slice(0, 40),
+        };
+      });
+    },
+    [],
+  );
+
+  const setWatchStatus = useCallback(
+    (id: number, status: WatchStatus) => {
+      setState((current) => ({
+        ...current,
+        watchlist: current.watchlist.map((entry) =>
+          entry.id === id ? { ...entry, status } : entry,
+        ),
+      }));
+    },
+    [],
+  );
+
+  const removeFromWatchlist = useCallback((id: number) => {
+    setState((current) => ({
+      ...current,
+      watchlist: current.watchlist.filter((entry) => entry.id !== id),
+    }));
+  }, []);
+
   const level = Math.floor(state.xp / 150) + 1;
   const levelXp = state.xp % 150;
   const achievements = useMemo(
@@ -193,8 +267,26 @@ export function TrainerProvider({ children }: { children: ReactNode }) {
         detail: "Speichere fünf Karten oder Anime.",
         unlocked: state.favorites.length >= 5,
       },
+      {
+        title: "Anime-Kenner",
+        detail: "Meistere eine perfekte Anime-Quizrunde.",
+        unlocked: state.animeQuizBest >= 6,
+      },
+      {
+        title: "Serienreisender",
+        detail: "Schließe drei Anime auf deiner Watchlist ab.",
+        unlocked:
+          state.watchlist.filter((entry) => entry.status === "completed")
+            .length >= 3,
+      },
     ],
-    [state.favorites.length, state.quizBest, state.team.length],
+    [
+      state.animeQuizBest,
+      state.favorites.length,
+      state.quizBest,
+      state.team.length,
+      state.watchlist,
+    ],
   );
 
   const value = useMemo<TrainerContextValue>(
@@ -210,15 +302,23 @@ export function TrainerProvider({ children }: { children: ReactNode }) {
       toggleDiscovery,
       isDiscoverySaved,
       completeQuiz,
+      completeAnimeQuiz,
+      addToWatchlist,
+      setWatchStatus,
+      removeFromWatchlist,
     }),
     [
       achievements,
       addPokemon,
+      addToWatchlist,
+      completeAnimeQuiz,
       completeQuiz,
       isDiscoverySaved,
       level,
       levelXp,
       removePokemon,
+      removeFromWatchlist,
+      setWatchStatus,
       setTrainerName,
       state,
       toggleDiscovery,
