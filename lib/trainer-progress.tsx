@@ -268,6 +268,12 @@ export function TrainerProvider({ children }: { children: ReactNode }) {
         unlocked: state.favorites.length >= 5,
       },
       {
+        title: "Holo-Sammler",
+        detail: "Sammle fünf Pokémon-Karten im Karten-Labor.",
+        unlocked:
+          state.favorites.filter((entry) => entry.kind === "card").length >= 5,
+      },
+      {
         title: "Anime-Kenner",
         detail: "Meistere eine perfekte Anime-Quizrunde.",
         unlocked: state.animeQuizBest >= 6,
@@ -282,7 +288,7 @@ export function TrainerProvider({ children }: { children: ReactNode }) {
     ],
     [
       state.animeQuizBest,
-      state.favorites.length,
+      state.favorites,
       state.quizBest,
       state.team.length,
       state.watchlist,

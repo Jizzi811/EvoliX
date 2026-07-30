@@ -125,6 +125,12 @@ function EvoliXApp() {
             Anime
           </button>
           <button
+            className={section === "tcg" ? "active" : ""}
+            onClick={() => navigate("tcg", "pokemon")}
+          >
+            Karten
+          </button>
+          <button
             className={section === "quest" ? "active" : ""}
             onClick={() => navigate("quest", "quest")}
           >
@@ -275,8 +281,8 @@ function EvoliXApp() {
                 />
                 <HoloCard
                   eyebrow="SAMMELN"
-                  title="Holo-Archiv"
-                  text="Pokémon-Karten aus verschiedenen Epochen entdecken und merken."
+                  title="Karten-Labor"
+                  text="Deutsche Karten, Seltenheiten, Attacken und Marktwerte entdecken."
                   icon={<Images />}
                   accent="cyan"
                   onClick={() => navigate("tcg", "pokemon")}
